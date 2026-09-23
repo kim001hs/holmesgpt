@@ -9,6 +9,7 @@ permissions:
   contents: write
 jobs:
   deploy:
+    if: github.repository == 'robusta-dev/holmesgpt'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

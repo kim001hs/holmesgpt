@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.repository == 'robusta-dev/holmesgpt'
     runs-on: ubuntu-latest
 
     permissions:

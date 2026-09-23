@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   check-changes:
+    if: github.repository == 'robusta-dev/holmesgpt'
     runs-on: ubuntu-latest
     outputs:
       should_test: ${{ steps.changes.outputs.should_test }}
