@@ -16,6 +16,7 @@ on:
 jobs:
   benchmark-pr:
     name: "Benchmark PR"
+    if: github.repository == 'robusta-dev/holmesgpt'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:

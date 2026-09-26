@@ -1,0 +1,63 @@
+name: Build and Push to AWS ECR
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'holmes/**'
+      - 'Dockerfile'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - 'server.py'
+      - '.github/workflows/build-and-push-ecr.yaml'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::818719120165:role/msa-demo-github-actions-role
+          role-session-name: GitHubActions-HolmesGPTECRPush
+          aws-region: ap-northeast-2
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push Docker Image to ECR
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/holmesgpt:latest
+            ${{ steps.login-ecr.outputs.registry }}/holmesgpt:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Summary
+        run: |
+          echo "## 🚀 HolmesGPT Docker Image Pushed to ECR!" >> $GITHUB_STEP_SUMMARY
+          echo "- **Registry:** \`${{ steps.login-ecr.outputs.registry }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tags:**" >> $GITHUB_STEP_SUMMARY
+          echo "  - \`${{ steps.login-ecr.outputs.registry }}/holmesgpt:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "  - \`${{ steps.login-ecr.outputs.registry }}/holmesgpt:${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target Architecture:** \`linux/amd64\` (x86_64 EKS Worker Nodes)" >> $GITHUB_STEP_SUMMARY
